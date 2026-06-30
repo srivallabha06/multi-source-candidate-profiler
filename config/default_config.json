@@ -1,0 +1,49 @@
+{
+  "pipeline": {
+    "default_phone_region": "IN",
+    "max_github_repos": 50,
+    "request_timeout_seconds": 30,
+    "log_level": "INFO"
+  },
+  "entity_resolution": {
+    "merge_threshold": 80,
+    "require_strong_signal_for_merge": true,
+    "weights": {
+      "email_match": 100,
+      "phone_match": 80,
+      "linkedin_match": 100,
+      "github_match": 100,
+      "name_similarity": 30,
+      "location_match": 10,
+      "company_overlap": 20,
+      "education_overlap": 15,
+      "skill_overlap": 10
+    },
+    "name_similarity_threshold": 0.85,
+    "skill_overlap_threshold": 0.50
+  },
+  "conflict_resolution": {
+    "trust_hierarchy": [
+      "resume_json",
+      "linkedin_json",
+      "github",
+      "ats_csv",
+      "hr_system",
+      "portfolio_web",
+      "pdf"
+    ]
+  },
+  "confidence": {
+    "source_base_scores": {
+      "resume_json": 0.95,
+      "linkedin_json": 0.85,
+      "github_repo_language": 0.80,
+      "github_readme_keyword": 0.60,
+      "pdf_keyword": 0.50,
+      "portfolio_keyword": 0.50,
+      "ats_csv": 0.70,
+      "hr_system": 0.90,
+      "inferred": 0.40
+    }
+  }
+}

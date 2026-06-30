@@ -1,0 +1,39 @@
+{
+  "firstName": "Sri Vallabha",
+  "lastName": "Dahagam",
+  "emailAddress": "srivallabhadahagam@gmail.com",
+  "phone": "",
+  "headline": "B.Tech in Computer Science and Engineering | Python | Java | JavaScript | AI/ML | Cloud",
+  "location": "Hyderabad, Telangana, India",
+  "publicProfileUrl": "https://www.linkedin.com/in/sri-vallabha-dahagam-0480612b0/",
+  "skills": [
+    {"name": "Python"},
+    {"name": "Java"},
+    {"name": "JavaScript"},
+    { "name": ".NET" },
+    {"name": "ReactJS"},
+    {"name": "Node.js"},
+    {"name": "Express.js"},
+    {"name": "MySQL"},
+    {"name": "MongoDB"},
+    {"name": "AWS"},
+    {"name": "Git"},
+    {"name": "GitHub"},
+    {"name": "TensorFlow"},
+    {"name": "PyTorch"},
+    {"name": "OpenCV"},
+    {"name": "Scikit-learn"},
+    {"name": "Pandas"},
+    {"name": "Matplotlib"}
+  ],
+  "positions": [],
+  "educations": [
+    {
+      "schoolName": "Institute of Aeronautical Engineering",
+      "degree": "Bachelor of Technology",
+      "fieldOfStudy": "Computer Science and Engineering",
+      "startDate": {"year": 2023},
+      "endDate": null
+    }
+  ]
+}

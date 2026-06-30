@@ -1,0 +1,57 @@
+{
+  "profile": {
+    "login": "rahul-sharma",
+    "name": "Rahul Sharma",
+    "email": null,
+    "bio": "Backend developer • Open source contributor • Java & Python enthusiast",
+    "location": "Bengaluru, India",
+    "html_url": "https://github.com/rahul-sharma",
+    "blog": "https://rahuldev.com",
+    "public_repos": 28,
+    "followers": 142
+  },
+  "repos": [
+    {
+      "name": "microservices-demo",
+      "language": "Java",
+      "topics": ["microservices", "spring-boot", "docker", "kubernetes"],
+      "stargazers_count": 45,
+      "pushed_at": "2026-05-15T10:30:00Z"
+    },
+    {
+      "name": "python-ml-toolkit",
+      "language": "Python",
+      "topics": ["machine-learning", "data-science", "pandas"],
+      "stargazers_count": 32,
+      "pushed_at": "2026-04-20T08:00:00Z"
+    },
+    {
+      "name": "react-dashboard",
+      "language": "JavaScript",
+      "topics": ["react", "dashboard", "typescript"],
+      "stargazers_count": 18,
+      "pushed_at": "2026-03-10T14:00:00Z"
+    },
+    {
+      "name": "aws-terraform-modules",
+      "language": "HCL",
+      "topics": ["terraform", "aws", "infrastructure-as-code"],
+      "stargazers_count": 67,
+      "pushed_at": "2026-06-01T09:00:00Z"
+    },
+    {
+      "name": "go-api-starter",
+      "language": "Go",
+      "topics": ["golang", "rest-api"],
+      "stargazers_count": 12,
+      "pushed_at": "2025-12-05T16:00:00Z"
+    },
+    {
+      "name": "dotfiles",
+      "language": "Shell",
+      "topics": [],
+      "stargazers_count": 3,
+      "pushed_at": "2025-11-01T12:00:00Z"
+    }
+  ]
+}

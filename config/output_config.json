@@ -1,0 +1,23 @@
+{
+  "fields": [
+    {"path": "candidate_id", "from": "candidate_id"},
+    {"path": "full_name", "from": "full_name"},
+    {"path": "emails", "from": "emails[*]"},
+    {"path": "phones", "from": "phones[*]"},
+    {"path": "location.city", "from": "location.city"},
+    {"path": "location.region", "from": "location.region"},
+    {"path": "location.country", "from": "location.country"},
+    {"path": "links.linkedin", "from": "links.linkedin"},
+    {"path": "links.github", "from": "links.github"},
+    {"path": "links.portfolio", "from": "links.portfolio"},
+    {"path": "links.other", "from": "links.other[*]"},
+    {"path": "headline", "from": "headline"},
+    {"path": "years_experience", "from": "years_experience"},
+    {"path": "skills", "from": "skills[*]"},
+    {"path": "experience", "from": "experience[*]"},
+    {"path": "education", "from": "education[*]"}
+  ],
+  "include_confidence": true,
+  "include_provenance": true,
+  "on_missing": "null"
+}

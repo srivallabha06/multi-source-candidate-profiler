@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Source Candidate Profiler & Deduplicator</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand-section">
+                <div class="brand-logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="url(#logo-grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="url(#logo-grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <defs>
+                            <linearGradient id="logo-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#6366f1"/>
+                                <stop offset="1" stop-color="#a855f7"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="brand-title">
+                    <h1>Eightfold AI</h1>
+                    <span>Candidate Data Transformer</span>
+                </div>
+            </div>
+
+            <!-- Ingestion Zone -->
+            <div class="sidebar-section">
+                <h3>Ingest Sources</h3>
+                <div class="drop-zone" id="drop-zone">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15M17 8L12 3M12 3L7 8M12 3V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <p>Drag & drop resumes here</p>
+                    <span>Supports JSON, PDF, CSV</span>
+                    <input type="file" id="file-input" multiple accept=".json,.pdf,.csv" style="display: none;">
+                    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('file-input').click()">Browse Files</button>
+                </div>
+                <div class="url-ingest-row">
+                    <input type="text" id="url-input" placeholder="Paste GitHub or LinkedIn URL...">
+                    <button class="btn btn-secondary btn-sm" id="add-url-btn">Add URL</button>
+                </div>
+                <div id="uploaded-files-list" class="file-list"></div>
+            </div>
+
+            <!-- Samples Checkbox List -->
+            <div class="sidebar-section">
+                <h3>Quick Select Samples</h3>
+                <div class="samples-container" id="samples-container">
+                    <div class="loading-small">Loading sample files...</div>
+                </div>
+            </div>
+
+            <!-- Output Config Editor -->
+            <div class="sidebar-section">
+                <h3>Output Schema Config</h3>
+                <textarea id="output-config-editor" style="width: 100%; height: 110px; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-color); border-radius: 8px; color: #a5b4fc; font-family: var(--font-mono); font-size: 0.72rem; padding: 8px; resize: vertical; outline: none; transition: border-color 0.2s;" placeholder="Loading output config..."></textarea>
+            </div>
+
+            <!-- Trigger Button -->
+            <div class="sidebar-action">
+                <button class="btn btn-primary btn-block" id="run-btn" disabled>
+                    <span>Run Ingestion Pipeline</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header Grid Metrics -->
+            <header class="dashboard-header">
+                <div class="header-welcome">
+                    <h2>Pipeline Dashboard</h2>
+                    <p>Monitor identity resolution, data standardizations, and profile merges.</p>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-title">Sources Processed</span>
+                        <span class="metric-value" id="metric-sources">0</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-title">Canonical Profiles</span>
+                        <span class="metric-value" id="metric-profiles">0</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-title">Deduplication Rate</span>
+                        <span class="metric-value" id="metric-dedup-rate">0%</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Live Pipeline Timeline Flow -->
+            <section class="pipeline-section">
+                <div class="pipeline-flow" id="pipeline-flow">
+                    <div class="flow-step" id="step-ingest">
+                        <div class="step-dot"></div>
+                        <div class="step-label">Ingestion</div>
+                    </div>
+                    <div class="flow-step" id="step-normalize">
+                        <div class="step-dot"></div>
+                        <div class="step-label">Normalization</div>
+                    </div>
+                    <div class="flow-step" id="step-resolve">
+                        <div class="step-dot"></div>
+                        <div class="step-label">Entity Resolution</div>
+                    </div>
+                    <div class="flow-step" id="step-merge">
+                        <div class="step-dot"></div>
+                        <div class="step-label">Profile Merging</div>
+                    </div>
+                    <div class="flow-step" id="step-confidence">
+                        <div class="step-dot"></div>
+                        <div class="step-label">Confidence Scoring</div>
+                    </div>
+                    <div class="flow-step" id="step-output">
+                        <div class="step-dot"></div>
+                        <div class="step-label">Dynamic Output</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results View Workspace Grid -->
+            <div class="results-layout">
+                <!-- Resolved Profiles list -->
+                <section class="candidates-section">
+                    <div class="section-header">
+                        <h3>Canonical Candidates</h3>
+                        <span class="badge" id="candidates-count">0 profiles</span>
+                    </div>
+                    <div class="candidates-grid" id="candidates-grid">
+                        <div class="placeholder-card">
+                            <p>Select inputs in the sidebar and trigger the transformation pipeline to view unified candidate profiles.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Detailed logs and raw formats -->
+                <section class="details-section">
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="tab-logs">Terminal Logs</button>
+                        <button class="tab-btn" data-tab="tab-output">Output Schema</button>
+                        <button class="tab-btn" data-tab="tab-report">Explainability Report</button>
+                    </div>
+                    <div class="tab-content active" id="tab-logs">
+                        <div class="terminal-container">
+                            <pre class="terminal-body" id="terminal-logs">System initialized. Waiting for pipeline execution...</pre>
+                        </div>
+                    </div>
+                    <div class="tab-content" id="tab-output" style="flex-direction: column;">
+                        <div class="output-selector-row" style="padding: 12px 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px; width: 100%;">
+                            <label for="output-candidate-selector" style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">View Output:</label>
+                            <select id="output-candidate-selector" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary); padding: 6px 12px; font-size: 0.8rem; outline: none; transition: border-color 0.2s; cursor: pointer; flex-grow: 1;">
+                                <option value="all">All Candidates (Combined Array)</option>
+                            </select>
+                        </div>
+                        <div class="code-container" style="height: calc(100% - 50px); width: 100%;">
+                            <button class="btn-copy" onclick="copyText('json-output')">Copy</button>
+                            <pre><code id="json-output">{}</code></pre>
+                        </div>
+                    </div>
+                    <div class="tab-content" id="tab-report">
+                        <div class="code-container">
+                            <button class="btn-copy" onclick="copyText('json-report')">Copy</button>
+                            <pre><code id="json-report">{}</code></pre>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Candidate Detailed Inspection Modal (Side Drawer) -->
+    <div class="drawer" id="profile-drawer">
+        <div class="drawer-overlay" onclick="closeDrawer()"></div>
+        <div class="drawer-content">
+            <button class="drawer-close" onclick="closeDrawer()">&times;</button>
+            <div class="drawer-header">
+                <div class="drawer-candidate-meta">
+                    <h2 id="drawer-name">Candidate Name</h2>
+                    <p id="drawer-headline">Headline</p>
+                    <div class="drawer-badges">
+                        <span class="badge" id="drawer-yoe">0 years exp</span>
+                        <span class="badge" id="drawer-sources-badge">0 sources</span>
+                    </div>
+                </div>
+                <div class="drawer-gauge">
+                    <div class="gauge-ring">
+                        <svg width="80" height="80" viewBox="0 0 80 80">
+                            <circle cx="40" cy="40" r="34" class="gauge-bg" />
+                            <circle cx="40" cy="40" r="34" class="gauge-progress" id="drawer-gauge-path" />
+                        </svg>
+                        <div class="gauge-value" id="drawer-gauge-val">0%</div>
+                    </div>
+                    <span class="gauge-label">Confidence</span>
+                </div>
+            </div>
+
+            <!-- Profile Info Tabs -->
+            <div class="drawer-tabs">
+                <button class="drawer-tab-btn active" data-drawer-tab="dtab-overview">Overview</button>
+                <button class="drawer-tab-btn" data-drawer-tab="dtab-experience">Experience</button>
+                <button class="drawer-tab-btn" data-drawer-tab="dtab-education">Education</button>
+                <button class="drawer-tab-btn" data-drawer-tab="dtab-provenance">Audit & Provenance</button>
+            </div>
+
+            <div class="drawer-body">
+                <!-- Overview tab -->
+                <div class="drawer-tab-content active" id="dtab-overview">
+                    <div class="info-section">
+                        <h4>Contact Info</h4>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>Emails</label>
+                                <div id="drawer-emails">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label>Phones</label>
+                                <div id="drawer-phones">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label>Location</label>
+                                <div id="drawer-location">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h4>Social & Professional Links</h4>
+                        <div class="links-list" id="drawer-links">-</div>
+                    </div>
+
+                    <div class="info-section">
+                        <h4>Skills Taxonomy Map</h4>
+                        <div class="skills-grid" id="drawer-skills">-</div>
+                    </div>
+                </div>
+
+                <!-- Experience tab -->
+                <div class="drawer-tab-content" id="dtab-experience">
+                    <div class="timeline" id="drawer-timeline">-</div>
+                </div>
+
+                <!-- Education tab -->
+                <div class="drawer-tab-content" id="dtab-education">
+                    <div class="education-list" id="drawer-education">-</div>
+                </div>
+
+                <!-- Provenance / Audit tab -->
+                <div class="drawer-tab-content" id="dtab-provenance">
+                    <div class="audit-intro">
+                        <p>Detailed verification tracking for every resolved profile field. View exact extraction source, logic, and conflict resolution choices.</p>
+                    </div>
+                    <div class="table-container">
+                        <table class="audit-table">
+                            <thead>
+                                <tr>
+                                    <th>Field Path</th>
+                                    <th>Resolved Value</th>
+                                    <th>Method</th>
+                                    <th>Source File/URL</th>
+                                    <th>Conf.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="drawer-audit-rows">
+                                <tr>
+                                    <td colspan="5" style="text-align: center;">No audit tracking loaded</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script assets -->
+    <script src="app.js"></script>
+</body>
+</html>

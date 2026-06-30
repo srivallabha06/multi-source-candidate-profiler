@@ -1,0 +1,43 @@
+{
+  "full_name": "Priya Patel",
+  "email": "priya.patel@outlook.com",
+  "phone": "+91 8765432109",
+  "location": {
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "country": "Republic of India"
+  },
+  "links": {
+    "linkedin": "https://www.linkedin.com/in/priya-patel-ml/",
+    "github": "https://github.com/priya-patel",
+    "portfolio": "https://priyapatel.dev"
+  },
+  "headline": "Machine Learning Engineer",
+  "years_experience": 4,
+  "skills": ["Python", "Django", "React", "PostgreSQL", "Machine Learning", "TensorFlow", "Pandas", "scikit-learn", "Deep Learning", "NLP"],
+  "experience": [
+    {
+      "company": "DataVision Inc",
+      "title": "ML Engineer",
+      "start_date": "March 2022",
+      "end_date": "present",
+      "description": "Building ML pipelines for NLP applications"
+    },
+    {
+      "company": "AnalyticsHub",
+      "title": "Data Scientist",
+      "start_date": "2020-07",
+      "end_date": "2022-02",
+      "description": "Developed predictive models using Python and scikit-learn"
+    }
+  ],
+  "education": [
+    {
+      "institution": "IIT Delhi",
+      "degree": "M.Tech",
+      "field_of_study": "Artificial Intelligence",
+      "start_date": "2018",
+      "end_date": "2020"
+    }
+  ]
+}

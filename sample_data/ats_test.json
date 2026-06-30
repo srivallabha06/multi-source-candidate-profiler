@@ -1,0 +1,42 @@
+{
+  "candidateId": "ATS-1001",
+  "firstName": "Rama",
+  "lastName": "Dahagam",
+  "email": "rama.d@example.com",
+  "phone": "+91 9876543210",
+  "location": {
+    "city": "Hyderabad",
+    "state": "Telangana",
+    "country": "India"
+  },
+  "headline": "Software Engineer",
+  "skills": [
+    "Java",
+    "Spring Boot",
+    "AWS",
+    "Docker",
+    "PostgreSQL"
+  ],
+  "experience": [
+    {
+      "company": "ABC Technologies",
+      "title": "Software Engineer",
+      "startDate": "2022-06",
+      "endDate": null,
+      "current": true
+    }
+  ],
+  "education": [
+    {
+      "institution": "JNTU Hyderabad",
+      "degree": "B.Tech",
+      "field": "Computer Science",
+      "graduationYear": 2022
+    }
+  ],
+  "socialProfiles": {
+    "github": "https://github.com/rama",
+    "linkedin": "https://linkedin.com/in/rama-dahagam"
+  },
+  "lastUpdated": "2026-07-01T10:00:00Z"
+}
