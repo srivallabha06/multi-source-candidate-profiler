@@ -1,57 +1,26 @@
-# 🚀 Multi-Source Candidate Profiler & Identity Resolution Engine
+# Multi-Source Candidate Profiler & Identity Resolution Engine
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![Code Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)]()
-
-An enterprise-grade **Candidate Identity Resolution & Profile Deduplication Engine**. This system ingests fragmented applicant profiles from diverse sources (PDF Resumes, LinkedIn Scraping, GitHub API, ATS Databases, CSV reports), standardizes fields, resolves identities with high precision, and outputs unified golden records.
-
-> [!TIP]
-> **Recruiter & HR Tech Impact**: In large databases, up to 30% of candidate profiles are duplicates. This engine merges fragmented profiles automatically, preventing recruiters from sending duplicate contact spam and saving countless hours of database cleanup.
+An enterprise-grade Python candidate profile aggregation system. This engine ingests candidate resumes, scrapers, and datasets from heterogeneous sources, resolves candidate identity, deduplicates records, and exports clean canonical profiles according to custom schemas.
 
 ---
 
-## 🌟 Key Engineering Highlights (For Tech Recruiters)
+## 1. Quick Start
 
-*   **Pluggable Ingestion Pipeline**: Decoupled Adapter architecture supporting **7 data sources** (including raw PDF parsing, direct LinkedIn API scraping, and GitHub portfolio integrations).
-*   **Fuzzy Set-Based Entity Resolution**: Combines blocking indexing on strong identifiers with order-independent Jaccard Name similarity scoring.
-*   **Failsafe Matching Gating**: Restricts merges to candidates with overlapping unique keys (Email, Phone, social handles) to eliminate false merges of people sharing the same name.
-*   **Conflict Resolution Engine**: Deterministic trust-hierarchy resolution for data field values with full **Provenance history tracking** for database auditability.
-*   **Dynamic JSON-Path Projection**: Allows recruiters/API consumers to project output schemas on-the-fly via configuration templates.
-*   **100% Test Coverage**: Backed by **111 unit & integration tests** checking normalizers, adapters, resolution thresholds, and data loaders.
-
----
-
-## 🛠️ Tech Stack
-
-*   **Core Logic**: Python 3.9+ (Dataclasses, Regex pipelines, Object-Oriented design patterns)
-*   **PDF Processing**: `pdfplumber` (custom layout-grouping & text-extraction)
-*   **Phone Normalization**: Google's `libphonenumber` wrapper (`phonenumbers`)
-*   **Web Dashboard**: Flask (Python) + Modern Glassmorphism CSS & JavaScript Frontend
-*   **Validation & Testing**: `pytest`
-
----
-
-## 🚀 Interactive Web Dashboard
-
-The application features a sleek Web UI allowing recruiters to drag-and-drop resumes, specify a target LinkedIn profile URL, test matching schemas live, and view the canonical golden profile output:
-
+### Installation
+Clone the repository and install the dependencies:
 ```bash
-# 1. Install project dependencies
 pip install -r requirements.txt
+```
 
-# 2. Launch the local web server
+### Running the Web Dashboard UI
+Start the interactive Flask dashboard to drag-and-drop resumes, live-edit configurations, and preview outputs:
+```bash
 python app.py
 ```
-*   **Access UI**: Open your browser and navigate to **`http://localhost:5000`**.
+Open your browser and navigate to **`http://localhost:5000`**.
 
----
-
-## ⚙️ CLI Quick Start
-
-You can also run the profiler as a batch command line processor:
-
+### Running the CLI
+Run the batch candidate transformer from the command line:
 ```bash
 python main.py \
   --inputs sample_data/ \
@@ -60,83 +29,120 @@ python main.py \
   --report report.json
 ```
 
+### Running Unit Tests
+Validate the system logic using the pytest suite (111 tests):
+```bash
+python -m pytest tests/ -v
+```
+
 ---
 
-## 📊 Pipeline Logic & Data Flows
+## 2. Pipeline Architecture
 
-### Ingestion Adapters
-The pipeline parses multiple file shapes into uniform intermediate `RawCandidateRecord` objects:
-*   `ResumeJsonAdapter` / `ATSJsonAdapter`: Structured JSON applicant data.
-*   `PDFAdapter`: Custom regex-based PDF parser extracting names, E.164 phone formats, location details, dates, and experience blocks.
-*   `LinkedInJsonAdapter` / `GitHubAdapter`: Integrated live API scrapers mapping public social profiles.
-
-### Example: Candidate Ingest & Resolution Flow
+The pipeline processes candidate data sequentially to safely merge profiles into clean golden records:
 
 ```mermaid
 graph TD
-    A[Raw Resume PDF] -->|Ingested| B[Intermediate Record]
-    C[LinkedIn URL] -->|API Scraped| D[Intermediate Record]
-    B -->|Name Tokenization & Phone Normalizer| E[Clean In-Memory Data]
-    D -->|Name Tokenization & Phone Normalizer| E
-    E -->|Identity Resolver Gating| F{Overlapping Email/Phone/Social?}
-    F -->|Yes: Name similarity matches| G[Merged Canonical Golden Profile]
-    F -->|No: Separate Candidates| H[Two Standalone Profiles]
+    A[Phase 1: Ingest & Detect] -->|Raw Records| B[Phase 2: Data Normalization]
+    B -->|Clean Records| C[Phase 3: Blocking & Pairing]
+    C -->|Candidate Clusters| D[Phase 4: Merge & De-conflict]
+    D -->|Canonical Profiles| E[Phase 5: Confidence Scoring]
+    E -->|Scored Profiles| F[Phase 6: Custom Projection]
+    F -->|Golden Records| G[Phase 7: Separate File Writing]
 ```
 
-### Example: Cleaned Golden Profile Output (`output/rama_dahagam.json`)
-The output schema renames nested fields and organizes timelines into the exact target formats required by ATS systems:
+1.  **Ingest & Detect**: Scans input files and URLs, routing each to its matching ingestion adapter.
+2.  **Data Normalization**: Standardizes messy data fields (names, phone formats, country lists, timeline dates) and matches skills against a canonical taxonomy database.
+3.  **Blocking & Pairing**: Index-blocks on unique keys (Email, Phone, social URLs) to avoid O(N²) comparisons, pairing matching records.
+4.  **Merge & De-conflict**: Combines clustered records into unified Canonical Profiles using a source trust hierarchy.
+5.  **Confidence Scoring**: Evaluates profile trust and completeness scores between `0.0` and `1.0`.
+6.  **Custom Projection**: Dynamically transforms the profiles according to custom user-defined schemas.
+7.  **Separate File Writing**: Saves each candidate output profile in its own standalone JSON file in the `output/` folder.
+
+---
+
+## 3. System Modules & Directory Structure
+
+*   **`src/models/`**: Defines the data models. Contains `candidate.py` (defining `Location`, `Links`, `Skill`, `Experience`, `Education`, and `CanonicalProfile`) and `provenance.py` (for database audit records).
+*   **`src/adapters/`**: Pluggable ingestion adapters that parse various candidate formats into unified `RawCandidateRecord` structures.
+*   **`src/normalizers/`**: Sanitization modules standardizing names, E.164 phone formats, ISO-3166 countries, YYYY-MM dates, taxonomy skills, and URLs.
+*   **`src/engine/`**: Core algorithmic deduplication engines. Contains `entity_resolution.py` (blocking index & scoring), `profile_merger.py` (field union rules), `conflict_resolver.py` (trust hierarchies), and `confidence.py` (completeness grading).
+*   **`src/output/`**: Serialization structures. Handles dynamic schema configuration mapping (`configurator.py`) and explainability outputs (`report.py`).
+*   **`src/pipeline.py`**: The orchestrator coordinating adapter discoverability, normalization, merging, and output transformation.
+
+---
+
+## 4. Adapters & Supported Source Types
+
+The system includes **7 pluggable adapters** inheriting from a unified `BaseAdapter` interface:
+
+1.  **`ResumeJsonAdapter`** (Source: `resume_json`): Ingests pre-parsed candidate resumes in structured JSON.
+2.  **`LinkedInJsonAdapter`** (Source: `linkedin_json`): Scrapes public LinkedIn profiles from direct URLs using Apify Scraper APIs, or parses offline JSON profile exports.
+3.  **`GitHubAdapter`** (Source: `github`): Fetches user details, repositories, and programming language distributions from the GitHub REST API.
+4.  **`ATSCsvAdapter`** (Source: `ats_csv`): Parses tabular ATS CSV files, automatically mapping headers to fields.
+5.  **`ATSJsonAdapter`** (Source: `ats_json`): Parses databases candidate listing exports. Standardizes nested camelCase fields, `startDate`/`endDate` metrics, and nested social profiles.
+6.  **`PDFAdapter`** (Source: `pdf`): Parses raw resume PDFs using `pdfplumber`, employing layout-grouping heuristics to extract experience timelines and academic records.
+7.  **`PortfolioWebAdapter`** (Source: `portfolio_web`): Extracts profile text and skills from portfolio URLs.
+
+---
+
+## 5. Output Configuration Schema
+
+The output is dynamically projected at runtime using `config/output_config.json`. This configuration supports field renames, array mappings, confidence overlays, and provenance logs:
+
 ```json
 {
-  "candidate_id": "30216b22-125a-5848-b46a-726b1ac3b0d7",
-  "full_name": "Rama Dahagam",
-  "emails": ["rama.d@example.com"],
-  "phones": ["+919876543210"],
-  "location": {
-    "city": "Hyderabad",
-    "region": null,
-    "country": "IN"
-  },
-  "links": {
-    "linkedin": "https://linkedin.com/in/rama-dahagam",
-    "github": "https://github.com/rama",
-    "portfolio": null,
-    "other": []
-  },
-  "headline": "Software Engineer",
-  "skills": [
-    { "name": "Java", "confidence": 0.5, "sources": ["ats_json"] },
-    { "name": "Spring", "confidence": 0.5, "sources": ["ats_json"] }
+  "fields": [
+    {"path": "candidate_id", "from": "candidate_id"},
+    {"path": "full_name", "from": "full_name"},
+    {"path": "emails", "from": "emails[*]"},
+    {"path": "phones", "from": "phones[*]"},
+    {"path": "location.city", "from": "location.city"},
+    {"path": "location.region", "from": "location.region"},
+    {"path": "location.country", "from": "location.country"},
+    {"path": "links.linkedin", "from": "links.linkedin"},
+    {"path": "links.github", "from": "links.github"},
+    {"path": "links.portfolio", "from": "links.portfolio"},
+    {"path": "links.other", "from": "links.other[*]"},
+    {"path": "headline", "from": "headline"},
+    {"path": "years_experience", "from": "years_experience"},
+    {"path": "skills", "from": "skills[*]"},
+    {"path": "experience", "from": "experience[*]"},
+    {"path": "education", "from": "education[*]"}
   ],
-  "experience": [
-    {
-      "company": "ABC Technologies",
-      "title": "Software Engineer",
-      "start": "2022-06",
-      "end": "present",
-      "summary": null
-    }
-  ],
-  "education": [
-    {
-      "institution": "JNTU Hyderabad",
-      "degree": "B.Tech",
-      "field": "Computer Science",
-      "end_year": "2022"
-    }
-  ],
-  "overall_confidence": 0.77
+  "include_confidence": true,
+  "include_provenance": true,
+  "on_missing": "null"
 }
 ```
 
 ---
 
-## 🧪 Testing Validation
+## 6. Normalization Rules
 
-The codebase ensures absolute stability through comprehensive unit tests:
+*   **Names**: Removes honorifics (Mr., Dr., Prof., etc.), strips punctuation/dashes, and converts to Title Case. Similarity scoring uses token set comparison, yielding a `1.0` match for reversed word orders (e.g. `"Dahagam Srivallabha"` vs `"Srivallabha Dahagam"`).
+*   **Phone Numbers**: Strips symbols and applies standardized E.164 country prefixes (using Google's `libphonenumber`).
+*   **Country Codes**: Maps variations (e.g., `USA`, `United States`, `US`) to ISO-3166 Alpha-2 codes (e.g., `US`).
+*   **Dates**: Formats start/end dates (e.g., `"March 2022"`, `"03/22"`, `"Present"`) to standardized `YYYY-MM` or `"present"`.
+*   **Skills**: Normalizes skills using `skill_taxonomy.json` alias trees (e.g., mapping `"Core Java"`, `"JDK"`, `"Java SE"` to canonical `"Java"`).
+*   **URLs**: Strips query strings, trailing slashes, and maps inputs to canonical `linkedin.com/in/...` or `github.com/...` structures.
 
-```bash
-# Run pytest check
-python -m pytest tests/ -v
-```
+---
 
-All **111 test cases** (Normalizers, Adapters, Resolvers, Profilers) are fully green.
+## 7. Conflict Resolution & Merging Policies
+
+*   **Match Threshold**: Record pairs are compared if they collide on a unique key (email, phone, linkedin, github). They are matched if their similarity score exceeds `80`. Merging is blocked on weak signals (name alone) to prevent false positives.
+*   **Trust Hierarchy Resolution**: When multiple sources provide conflicting values for a scalar field, the value from the highest-ranked source is kept:
+    $$\text{resume\_json} > \text{linkedin\_json} > \text{github} > \text{ats\_json} > \text{ats\_csv} > \text{hr\_system} > \text{portfolio\_web} > \text{pdf}$$
+*   **List Unioning**: Experience, education, and skills arrays are aggregated, deduplicated, and sorted.
+*   **Provenance Tracking**: Every merge decision is logged, recording the winning value, superseded value, source type, and extraction methodology.
+
+---
+
+## 8. Handled Edge Cases
+
+1.  **Reversed Name Tokens**: Identifies set equivalence for reversed names like `"Srivallabha Dahagam"` and `"Dahagam Srivallabha"`.
+2.  **Unicode Dash Mappings**: Converts Unicode en-dashes (`–`), em-dashes (`—`), and replacement characters (``) to standard hyphens `-` for date parsing.
+3.  **Score & GPA Stripping**: Cleans GPA markings (e.g., `"GPA: 9.00 / 10.0"`, `"10/10"`, `"Aggregate: 98.9 / 100%"`) from PDF academic records to extract pure disciplines (like `"Computer Science and Engineering"` or `"MPC"`).
+4.  **Error scraper handling**: Discards failed (404) or private LinkedIn scraping responses, preventing empty `"unknown"` profiles from corrupting candidate lists.
+5.  **Duplicate fields mapping**: Maps sub-keys within education and experience arrays (`startDate`/`endDate` $\rightarrow$ `start`/`end`, `graduationYear` $\rightarrow$ `end_year`) and keeps provenance records readable.
