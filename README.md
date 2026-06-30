@@ -1,31 +1,36 @@
-# Multi-Source Candidate Data Transformer
+# Multi-Source Candidate Data Transformer & Deduplicator
 
-A production-grade Python system that ingests candidate records from heterogeneous sources, normalizes data, resolves identity, builds canonical profiles with provenance tracking and confidence scoring, and produces configurable output schemas.
+A production-grade candidate profile aggregation system that ingests candidate resumes, scrapers, and datasets from heterogeneous sources, resolves candidate identity, deduplicates records, and exports clean canonical profiles according to custom schemas.
 
-## Features
+---
 
-- **Multi-source ingestion** — Resume JSON, LinkedIn JSON, GitHub API, ATS CSV, PDF, Portfolio websites, HR systems
-- **Pluggable adapter architecture** — Add new sources without modifying the core engine
-- **Data normalization** — Names (title-case), phones (E.164), countries (ISO-3166), skills (taxonomy), dates (YYYY-MM), URLs
-- **Entity resolution** — Index-based blocking + weighted signal scoring. Never merges on name alone
-- **Conflict resolution** — Configurable trust hierarchy. Never silently overwrites
-- **Provenance tracking** — Every field value is traceable to its source
-- **Confidence scoring** — Deterministic per-field and overall scores
-- **Configurable output** — Runtime JSON config for field renaming, selection, nesting, arrays
-- **Explainability reports** — Why records were merged, confidence breakdowns, conflict resolution details
-- **Fault tolerant** — Malformed inputs, missing fields, API failures never crash the pipeline
+## 1. Quick Start & Execution
 
-## Quick Start
-
-### Install dependencies
+### Installation
+Clone the repository and install the dependencies listed in `requirements.txt`:
 
 ```bash
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Run the pipeline
+### Running the Web dashboard UI
+The system includes an interactive web dashboard to upload profiles, edit output configuration schemas, trigger Apify LinkedIn scrapers, and preview merged output files side-by-side.
 
 ```bash
+# Start Flask server
+python app.py
+```
+1. Open your browser and navigate to **`http://localhost:5000`**.
+2. Upload test candidate records (PDFs, JSON, CSV).
+3. Optionally enter a LinkedIn URL or edit the output configuration schema in the sidebar.
+4. Click **Run Pipeline** to view results.
+
+### Running the Command Line Interface (CLI)
+You can run the pipeline directly from the command line by supplying input files or folders:
+
+```bash
+# Process single files or directories
 python main.py \
   --inputs sample_data/ \
   --config config/output_config.json \
@@ -34,110 +39,148 @@ python main.py \
   --log-level INFO
 ```
 
-### Run tests
+### Running Unit Tests
+Validate the system logic using the pytest suite (111 tests covering all normalizers, adapters, and engines):
 
 ```bash
 python -m pytest tests/ -v
 ```
 
-## Project Structure
+---
 
-```
-├── main.py                          # CLI entry point
-├── requirements.txt                 # Dependencies
-├── config/
-│   ├── default_config.json          # Pipeline configuration
-│   ├── output_config.json           # Output schema configuration
-│   └── skill_taxonomy.json          # Skill canonicalization taxonomy
-├── src/
-│   ├── models/                      # Data models (CanonicalProfile, Provenance)
-│   ├── adapters/                    # Source adapters (7 types)
-│   ├── normalizers/                 # Data normalizers (6 types)
-│   ├── engine/                      # Core engine (entity resolution, merger, confidence)
-│   ├── output/                      # Output configurator + explainability reports
-│   └── pipeline.py                  # Pipeline orchestrator
-├── tests/                           # Unit + integration tests (105 tests)
-└── sample_data/                     # Sample data for testing
-```
+## 2. Ingestion & Adapter Registry
 
-## CLI Options
+The system employs a pluggable adapter architecture to convert various candidate formats into unified `RawCandidateRecord` objects:
 
-| Option | Description | Default |
+| Source Type | Adapter | Target Inputs / Formats |
 |---|---|---|
-| `--inputs` | Input files or directories (required) | — |
-| `--config` | Output schema config JSON | None (full profile) |
-| `--pipeline-config` | Pipeline config JSON | `config/default_config.json` |
-| `--output` | Output JSON file path | `output.json` |
-| `--report` | Explainability report JSON path | None |
-| `--report-text` | Human-readable report path | None |
-| `--log-level` | Logging level | `INFO` |
+| `resume_json` | `ResumeJsonAdapter` | JSON files containing resume data |
+| `linkedin_json` | `LinkedInJsonAdapter` | Scraped LinkedIn profile JSON exports & direct profile URLs (using Apify Scraper APIs) |
+| `github` | `GitHubAdapter` | Github profile details & repo language metrics (GitHub REST APIs) |
+| `ats_csv` | `ATSCsvAdapter` | CSV files containing tabular candidates data (autodetects headers) |
+| `ats_json` | `ATSJsonAdapter` | JSON database exports containing single/lists of candidates |
+| `pdf` | `PDFAdapter` | Resume PDFs (text-extraction & regex timelines grouping logic) |
+| `portfolio_web` | `PortfolioWebAdapter` | Portfolio websites URL scrapers |
 
-## Configuration
+---
 
-### Pipeline Config (`config/default_config.json`)
+## 3. Input & Output Mappings (Data Examples)
 
-Controls merge threshold, trust hierarchy, confidence weights, phone region defaults, and GitHub API settings.
+The pipeline transforms raw heterogeneous inputs into standardized, clean structures.
 
-### Output Config (`config/output_config.json`)
-
-Runtime-configurable output schema:
-
+### Example: ATS JSON Input (`sample_data/ats_test.json`)
 ```json
 {
-  "fields": [
-    {"path": "name", "from": "full_name"},
-    {"path": "email", "from": "emails[0]"},
-    {"path": "skills", "from": "skills[*].name"}
+  "candidateId": "ATS-1001",
+  "firstName": "Rama",
+  "lastName": "Dahagam",
+  "email": "rama.d@example.com",
+  "phone": "+91 9876543210",
+  "location": { "city": "Hyderabad", "state": "Telangana", "country": "India" },
+  "headline": "Software Engineer",
+  "skills": ["Java", "Spring Boot", "AWS"],
+  "experience": [
+    {
+      "company": "ABC Technologies",
+      "title": "Software Engineer",
+      "startDate": "2022-06",
+      "endDate": null,
+      "current": true
+    }
   ],
-  "include_confidence": true,
-  "on_missing": "null"
+  "education": [
+    {
+      "institution": "JNTU Hyderabad",
+      "degree": "B.Tech",
+      "field": "Computer Science",
+      "graduationYear": 2022
+    }
+  ],
+  "socialProfiles": {
+    "linkedin": "https://linkedin.com/in/rama-dahagam"
+  }
 }
 ```
 
-### Skill Taxonomy (`config/skill_taxonomy.json`)
-
-Configurable skill name canonicalization with ~150 canonical skills and ~440 aliases.
-
-## Entity Resolution
-
-Uses index-based blocking on strong signals (email, phone, LinkedIn URL, GitHub URL) to avoid O(n²) comparisons, then scores candidate pairs with weighted signals:
-
-| Signal | Weight | Type |
-|---|---|---|
-| Email match | 100 | Strong |
-| Phone match | 80 | Strong |
-| LinkedIn URL match | 100 | Strong |
-| GitHub URL match | 100 | Strong |
-| Name similarity | 30 | Weak |
-| Company overlap | 20 | Weak |
-| Education overlap | 15 | Weak |
-| Location match | 10 | Weak |
-| Skill overlap | 10 | Weak |
-
-**Key rule**: Never merge candidates using names alone. At least one strong signal is required.
-
-## Adding New Source Adapters
-
-Create a new adapter by inheriting from `BaseAdapter`:
-
-```python
-from src.adapters.base import BaseAdapter
-
-class MyCustomAdapter(BaseAdapter):
-    @property
-    def source_type(self) -> str:
-        return "my_custom_source"
-
-    def can_handle(self, source_path: str) -> bool:
-        return source_path.endswith(".myformat")
-
-    def ingest(self, source_path: str):
-        # Parse and return List[RawCandidateRecord]
-        ...
+### Example: Standard Output Schema (`output/rama_dahagam.json`)
+Each candidate is outputted in their own dedicated JSON file named after them inside the `output/` folder:
+```json
+{
+  "candidate_id": "30216b22-125a-5848-b46a-726b1ac3b0d7",
+  "full_name": "Rama Dahagam",
+  "emails": [
+    "rama.d@example.com"
+  ],
+  "phones": [
+    "+919876543210"
+  ],
+  "location": {
+    "city": "Hyderabad",
+    "region": null,
+    "country": "IN"
+  },
+  "links": {
+    "linkedin": "https://linkedin.com/in/rama-dahagam",
+    "github": null,
+    "portfolio": null,
+    "other": []
+  },
+  "headline": "Software Engineer",
+  "years_experience": null,
+  "skills": [
+    {
+      "name": "Java",
+      "confidence": 0.5,
+      "sources": ["ats_json"]
+    },
+    {
+      "name": "Spring",
+      "confidence": 0.5,
+      "sources": ["ats_json"]
+    }
+  ],
+  "experience": [
+    {
+      "company": "ABC Technologies",
+      "title": "Software Engineer",
+      "start": "2022-06",
+      "end": "present",
+      "summary": null
+    }
+  ],
+  "education": [
+    {
+      "institution": "JNTU Hyderabad",
+      "degree": "B.Tech",
+      "field": "Computer Science",
+      "end_year": "2022"
+    }
+  ],
+  "overall_confidence": 0.77
+}
 ```
 
-Then register it in the pipeline's adapter registry.
+---
 
-## License
+## 4. Entity Resolution & Safeguards
 
-MIT
+The deduplication engine matches candidates by generating blocking index collisions on unique attributes (Email, Phone, LinkedIn, GitHub URLs) and calculating weighted scores:
+
+*   **Email Match**: +100 (Strong Signal)
+*   **Phone Match**: +80 (Strong Signal)
+*   **LinkedIn/GitHub Match**: +100 (Strong Signal)
+*   **Name Similarity**: +30 (Weak Signal)
+*   **Company Overlap**: +20 (Weak Signal)
+*   **Education Overlap**: +15 (Weak Signal)
+
+> [!IMPORTANT]
+> **Deduplication Safeguard**: Candidates are **never** merged on names/weak signals alone. At least one strong signal (colliding email, phone, or social URL) must match to prevent false-positive merges.
+
+---
+
+## 5. Adding New Adapters
+
+To extend the system to ingest other data sources:
+1. Inherit from `BaseAdapter` in `src/adapters/base.py`.
+2. Implement `can_handle(source_path)` and `ingest(source_path)`.
+3. Register the new class instantiation inside `src/pipeline.py`.
