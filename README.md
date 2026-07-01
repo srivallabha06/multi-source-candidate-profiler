@@ -146,3 +146,20 @@ The output is dynamically projected at runtime using `config/output_config.json`
 3.  **Score & GPA Stripping**: Cleans GPA markings (e.g., `"GPA: 9.00 / 10.0"`, `"10/10"`, `"Aggregate: 98.9 / 100%"`) from PDF academic records to extract pure disciplines (like `"Computer Science and Engineering"` or `"MPC"`).
 4.  **Error scraper handling**: Discards failed (404) or private LinkedIn scraping responses, preventing empty `"unknown"` profiles from corrupting candidate lists.
 5.  **Duplicate fields mapping**: Maps sub-keys within education and experience arrays (`startDate`/`endDate` $\rightarrow$ `start`/`end`, `graduationYear` $\rightarrow$ `end_year`) and keeps provenance records readable.
+
+---
+
+## 9. Explainability & Provenance Reports
+
+The system provides fully auditable and explainable candidate profile reconciliation, detailing exactly why records were merged and how conflicts were resolved.
+
+### Key Explainability Features
+*   **Merge Explanations**: Details every matched record pair, their overall similarity score, and the specific matching keys or signals (such as matching emails, phone numbers, GitHub profiles, or LinkedIn URLs) that triggered the merge, complete with signal weights.
+*   **Confidence Breakdowns**: Provides a field-by-field trust and completeness evaluation, highlighting how individual fields contribute to the overall profile confidence score.
+*   **Source Contributions**: Tracks which source documents contributed to which fields, mapping inputs back to the originating files.
+*   **Granular Field Provenance**: Maintains a chronological audit trail for every single field, recording the winning value, originating source type, extraction method, and source-specific confidence metrics.
+
+### Generating Reports
+*   **CLI JSON Report**: Use the `--report <path.json>` option to export a structured machine-readable JSON log of all merge telemetry.
+*   **CLI Text Report**: Use the `--report-text <path.txt>` option to generate a formatted, human-readable text file suitable for quick audits.
+*   **Web Dashboard UI**: The flask app includes a dedicated **Explainability Report** tab to visualize real-time pipeline telemetry, logs, and matching explanation objects interactively.
