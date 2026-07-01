@@ -175,7 +175,13 @@ def main() -> int:
             
         os.makedirs(output_dir, exist_ok=True)
         
-        for p in output_data:
+        # Get candidate reports from the full report
+        report_data = result.get("report", {})
+        candidate_reports_list = report_data.get("candidates", [])
+        from src.output.report import ExplainabilityReport
+        reporter = ExplainabilityReport()
+        
+        for i, p in enumerate(output_data):
             if isinstance(p, dict):
                 cid = p.get("candidate_id") or p.get("id")
                 name = p.get("full_name") or p.get("name") or cid
@@ -190,6 +196,33 @@ def main() -> int:
                 with open(file_path, "w", encoding="utf-8") as f:
                     json.dump(p, f, indent=2, default=str)
                 logger.info("Candidate profile saved separately to: %s", file_path)
+                
+                # Find matching candidate report
+                candidate_report = None
+                if cid:
+                    for rep in candidate_reports_list:
+                        if rep.get("candidate_id") == cid:
+                            candidate_report = rep
+                            break
+                if not candidate_report and i < len(candidate_reports_list):
+                    candidate_report = candidate_reports_list[i]
+                
+                if candidate_report:
+                    # Write candidate JSON report
+                    report_file_name = f"{clean_name}_report.json"
+                    report_file_path = os.path.join(output_dir, report_file_name)
+                    with open(report_file_path, "w", encoding="utf-8") as f:
+                        json.dump(candidate_report, f, indent=2, default=str)
+                    logger.info("Candidate report saved separately to: %s", report_file_path)
+                    
+                    # If report_text is requested, write candidate text report next to it too
+                    if args.report_text:
+                        text_report_file_name = f"{clean_name}_report.txt"
+                        text_report_file_path = os.path.join(output_dir, text_report_file_name)
+                        with open(text_report_file_path, "w", encoding="utf-8") as f:
+                            f.write(reporter.candidate_to_text(candidate_report))
+                        logger.info("Candidate text report saved separately to: %s", text_report_file_path)
+                        
     except Exception as e:
         logger.error("Failed to write output: %s", e)
         return 1

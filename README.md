@@ -160,6 +160,7 @@ The system provides fully auditable and explainable candidate profile reconcilia
 *   **Granular Field Provenance**: Maintains a chronological audit trail for every single field, recording the winning value, originating source type, extraction method, and source-specific confidence metrics.
 
 ### Generating Reports
+*   **Per-Candidate Reports (Automatic)**: Every time the pipeline processes data (via the CLI or Web UI), a candidate-specific explainability report is written directly to the output directory as `<candidate_name>_report.json` next to the candidate's canonical profile `<candidate_name>.json`. If `--report-text` is specified in the CLI, a text version is also generated as `<candidate_name>_report.txt`.
 *   **CLI JSON Report**: Use the `--report <path.json>` option to export a structured machine-readable JSON log of all merge telemetry.
 *   **CLI Text Report**: Use the `--report-text <path.txt>` option to generate a formatted, human-readable text file suitable for quick audits.
 *   **Web Dashboard UI**: The flask app includes a dedicated **Explainability Report** tab to visualize real-time pipeline telemetry, logs, and matching explanation objects interactively.

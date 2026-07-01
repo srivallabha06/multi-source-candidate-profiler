@@ -188,12 +188,17 @@ def process_candidates():
         pipeline = Pipeline(config=pipeline_config)
         result = pipeline.run(input_paths=input_paths, output_config=output_config)
         
-        # Save profiles to separate JSON files on the server disk
+        # Save profiles and reports to separate JSON files on the server disk
         try:
             import json
             output_dir = os.path.join(project_root, 'output')
             os.makedirs(output_dir, exist_ok=True)
-            for p in result.get('output', result.get('profiles', [])):
+            
+            # Fetch report candidates
+            report_data = result.get('report', {})
+            candidate_reports_list = report_data.get('candidates', [])
+            
+            for i, p in enumerate(result.get('output', result.get('profiles', []))):
                 if isinstance(p, dict):
                     cid = p.get("candidate_id") or p.get("id")
                     name = p.get("full_name") or p.get("name") or cid
@@ -207,8 +212,25 @@ def process_candidates():
                     with open(file_path, "w", encoding="utf-8") as f:
                         json.dump(p, f, indent=2, default=str)
                     logging.info("Candidate profile saved separately from Web UI: %s", file_path)
+                    
+                    # Save candidate report separately too
+                    candidate_report = None
+                    if cid:
+                        for rep in candidate_reports_list:
+                            if rep.get("candidate_id") == cid:
+                                candidate_report = rep
+                                break
+                    if not candidate_report and i < len(candidate_reports_list):
+                        candidate_report = candidate_reports_list[i]
+                    
+                    if candidate_report:
+                        report_file_name = f"{clean_name}_report.json"
+                        report_file_path = os.path.join(output_dir, report_file_name)
+                        with open(report_file_path, "w", encoding="utf-8") as f:
+                            json.dump(candidate_report, f, indent=2, default=str)
+                        logging.info("Candidate report saved separately from Web UI: %s", report_file_path)
         except Exception as e:
-            logging.error("Failed to save profiles to disk in Web UI run: %s", e)
+            logging.error("Failed to save profiles or reports to disk in Web UI run: %s", e)
         
         # Remove capture handler
         root_logger.removeHandler(capture_handler)
